@@ -188,7 +188,7 @@ function Phone({
         </div>
         <div className="header-side end">{action}</div>
       </header>
-      <main className="phone-content">{children}</main>
+      <main className="phone-content" style={{ overflowY: "auto", minHeight: 0, flex: "1 1 auto", paddingBottom: 24, WebkitOverflowScrolling: "touch" }}>{children}</main>
       {nav && <BottomNav active={nav} />}
       <div className="home-indicator" />
     </div>
@@ -297,10 +297,17 @@ function Tag({ children, dark = false }: { children: ReactNode; dark?: boolean }
 function MapPlaceholder({
   variant = "route",
   label,
+  onReportPinClick,
 }: {
   variant?: "route" | "reports" | "location" | "alternatives";
   label?: string;
+  onReportPinClick?: (category: string) => void;
 }) {
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const openReport = (category: string) => {
+    if (onReportPinClick) onReportPinClick(category);
+    else setSelectedReport(category);
+  };
   return (
     <div className={`map-placeholder ${variant}`}>
       <div className="road r1" />
@@ -320,15 +327,17 @@ function MapPlaceholder({
       )}
       {variant === "reports" && (
         <>
-          <span className="report-pin p1">!</span>
-          <span className="report-pin p2">!</span>
-          <span className="report-pin p3">!</span>
+          <button type="button" title="Banjir" aria-label="Lihat laporan banjir" className="report-pin p1 flood-pin" style={{ position: "absolute", border: "0", borderRadius: "999px", width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer", background: "#ffffff", color: "#222222", boxShadow: "0 2px 8px rgba(0,0,0,.18)", fontWeight: 700 }} onClick={() => openReport("Banjir")}>🌊</button>
+          <button type="button" title="Jalan Rusak" aria-label="Lihat laporan jalan rusak" className="report-pin p2 damage-pin" style={{ position: "absolute", border: "0", borderRadius: "999px", width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer", background: "#ffffff", color: "#222222", boxShadow: "0 2px 8px rgba(0,0,0,.18)", fontWeight: 700 }} onClick={() => openReport("Jalan Rusak")}>⚠</button>
+          <button type="button" title="Jalan Sempit" aria-label="Lihat laporan jalan sempit" className="report-pin p3 narrow-pin" style={{ position: "absolute", border: "0", borderRadius: "999px", width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer", background: "#ffffff", color: "#222222", boxShadow: "0 2px 8px rgba(0,0,0,.18)", fontWeight: 700 }} onClick={() => openReport("Jalan Sempit")}>↔</button>
+          <button type="button" title="Akses Terhalang" aria-label="Lihat laporan akses terhalang" className="report-pin p4 blocked-pin" style={{ position: "absolute", top: "68%", left: "76%", zIndex: 4 }} onClick={() => openReport("Akses Terhalang")}>⛔</button>
         </>
       )}
       <span className="map-pin">
         <Icon name="location" size={25} />
       </span>
       {label && <span className="map-label">{label}</span>}
+      {selectedReport && <div className="map-label report-selected-label"><strong>{selectedReport}</strong><span>Ketuk pin lain untuk melihat laporan</span></div>}
       <button className="map-control">◎</button>
     </div>
   );
@@ -468,7 +477,7 @@ function C2Screens() {
     <Section
       id="c2"
       code="C2"
-      count={8}
+      count={9}
       title="Rekomendasi Rute Berdasarkan Kendaraan"
       description="Pemilihan kendaraan, perbandingan akses jalan, dan navigasi rute."
     >
@@ -543,8 +552,8 @@ function C2Screens() {
           </div>
           <div className="content-title">
             <div>
-              <h4>Rute via Jl. Anggrek</h4>
-              <p>Untuk Sepeda Motor</p>
+              <h4>Rute A · Jl. Anggrek</h4>
+              <p>Direkomendasikan untuk Sepeda Motor</p>
             </div>
             <Icon name="bike" />
           </div>
@@ -556,8 +565,8 @@ function C2Screens() {
           <div className="note small">
             <Icon name="warning" />
             <p>
-              <strong>200 m jalan sempit</strong>
-              <span>Masih dapat dilalui sepeda motor.</span>
+              <strong>200 m jalan sempit · lalu lintas lancar</strong>
+              <span>Masih dapat dilalui sepeda motor. Untuk mobil/van, gunakan Rute B yang memiliki akses lebih lebar.</span>
             </p>
           </div>
           <div className="button-row">
@@ -566,7 +575,19 @@ function C2Screens() {
           </div>
         </Phone>
       </ScreenFlow>
-      <ScreenFlow index={4} name="Perbandingan Rute">
+      <ScreenFlow index={4} name="Rekomendasi Mobil/Van">
+        <Phone title="Rekomendasi Rute" eyebrow="UNTUK MOBIL/VAN">
+          <MapPlaceholder variant="alternatives" label="Rute B menghindari gang sempit" />
+          <div className="content-title"><div><h4>Rute B · Jl. Mawar</h4><p>Direkomendasikan untuk Mobil/Van</p></div><Icon name="car" /></div>
+          <div className="summary-band boxed"><Metric value="23 menit" label="Estimasi" /><Metric value="5,1 km" label="Jarak" /></div>
+          <div className="tag-row"><Tag dark>Disarankan</Tag><Tag>Jalan lebih lebar</Tag><Tag>Lalu lintas ramai</Tag></div>
+          <div className="note"><Icon name="check" /><p><strong>Akses lebih sesuai</strong><span>Rute B memiliki jalan lebih lebar dan ruang manuver lebih baik untuk mobil/van.</span></p></div>
+          <div className="card"><strong>Alternatif Rute A</strong><p>Rute A lebih singkat, tetapi memiliki bagian jalan selebar 2 meter. Jika tetap dipilih, sistem akan menampilkan peringatan akses kendaraan.</p></div>
+          <InfoRow icon="location" label="Titik parkir / putar balik" value="Area parkir dekat gerbang utama" />
+          <div className="spacer" /><Button>Gunakan Rute B</Button><Button secondary>Lihat Detail Rute A</Button>
+        </Phone>
+      </ScreenFlow>
+      <ScreenFlow index={5} name="Perbandingan Rute">
         <Phone title="Bandingkan Rute" eyebrow="2 ALTERNATIF">
           <div className="mini-map">
             <MapPlaceholder variant="alternatives" />
@@ -582,7 +603,8 @@ function C2Screens() {
             name="Rute B · Jl. Mawar"
             time="23 mnt"
             distance="5,1 km"
-            condition="Jalan lebar, lalu lintas padat"
+            condition="Jalan lebar · lalu lintas ramai · area manuver lebih tersedia"
+            recommended
           />
           <div className="comparison-head">
             <span>Perbandingan kondisi</span>
@@ -590,20 +612,25 @@ function C2Screens() {
             <strong>B</strong>
           </div>
           <div className="compare-row">
-            <span>Akses kendaraan</span>
-            <b>Baik</b>
-            <b>Baik</b>
+            <span>Kesesuaian kendaraan</span>
+            <b>Motor</b>
+            <b>Mobil/Van</b>
           </div>
           <div className="compare-row">
-            <span>Kondisi terbaru</span>
-            <b>5 mnt</b>
-            <b>18 mnt</b>
+            <span>Kondisi lalu lintas</span>
+            <b>Lancar</b>
+            <b>Ramai</b>
+          </div>
+          <div className="compare-row">
+            <span>Akses jalan</span>
+            <b>200 m sempit</b>
+            <b>Lebih lebar</b>
           </div>
           <div className="spacer" />
           <Button>Pilih Rute A</Button>
         </Phone>
       </ScreenFlow>
-      <ScreenFlow index={5} name="Detail Rute">
+      <ScreenFlow index={6} name="Detail Rute">
         <Phone title="Detail Rute" action={<Icon name="bike" />}>
           <div className="summary-band">
             <Metric value="18 menit" label="Estimasi" />
@@ -648,7 +675,7 @@ function C2Screens() {
           <Button>Mulai Navigasi</Button>
         </Phone>
       </ScreenFlow>
-      <ScreenFlow index={6} name="Peringatan Akses">
+      <ScreenFlow index={7} name="Peringatan Akses">
         <Phone title="Akses Kendaraan" eyebrow="PERINGATAN RUTE">
           <div className="warning-hero">
             <div>
@@ -680,7 +707,7 @@ function C2Screens() {
           <Button secondary>Ganti Kendaraan</Button>
         </Phone>
       </ScreenFlow>
-      <ScreenFlow index={7} name="Rute Alternatif">
+      <ScreenFlow index={8} name="Rute Alternatif">
         <Phone title="Rute Alternatif" eyebrow="AKSES MOBIL/VAN">
           <MapPlaceholder variant="route" label="Menghindari Gang Melati" />
           <div className="change-banner">
@@ -699,12 +726,13 @@ function C2Screens() {
             <strong>+6 menit · +1,2 km</strong>
           </div>
           <InfoRow icon="map" label="Akses jalan" value="Jalan lebar untuk mobil/van" />
+          <InfoRow icon="location" label="Titik parkir / putar balik" value="Area parkir dekat gerbang utama" />
           <InfoRow icon="clock" label="Kondisi diperbarui" value="2 menit yang lalu" />
           <div className="spacer" />
           <Button>Gunakan Rute Ini</Button>
         </Phone>
       </ScreenFlow>
-      <ScreenFlow index={8} name="Navigasi" last>
+      <ScreenFlow index={9} name="Navigasi" last>
         <Phone
           title="Navigasi Aktif"
           back={false}
@@ -788,11 +816,10 @@ function C3Screens() {
           <div className="large-map">
             <MapPlaceholder variant="reports" />
             <div className="map-legend">
-              <span>
-                <i />3 laporan di sekitar
-              </span>
+              <span><i />Pin berbeda untuk tiap kategori laporan</span>
               <button>Daftar</button>
             </div>
+            <div className="tag-row"><Tag>🌊 Banjir</Tag><Tag>⚠ Jalan Rusak</Tag><Tag>↔ Jalan Sempit</Tag><Tag>⛔ Akses Terhalang</Tag></div>
           </div>
           <div className="map-sheet">
             <div className="sheet-handle" />
@@ -822,10 +849,8 @@ function C3Screens() {
           <div className="category-list">
             {categories.map((item, i) => (
               <button className={i === 1 ? "selected" : ""} key={item}>
-                <span className="category-symbol">
-                  {i === 0 ? "×" : i === 1 ? "≈" : i === 2 ? "↔" : i === 3 ? "⌁" : "!"}
-                </span>
-                <strong>{item}</strong>
+                <span className="category-symbol">{i === 0 ? "🚧" : i === 1 ? "🌊" : i === 2 ? "↔" : i === 3 ? "⚠" : "⛔"}</span>
+                <span className="category-copy"><strong>{item}</strong><small>{i === 0 || i === 4 ? "Jalan tertutup atau tidak dapat dilalui" : i === 1 ? "Jalan tergenang air" : i === 2 ? "Masih dapat dilewati, tetapi ruang terbatas" : "Permukaan jalan berlubang atau rusak"}</small></span>
                 {i === 1 && <Icon name="check" />}
               </button>
             ))}
@@ -896,6 +921,7 @@ function C3Screens() {
           </div>
           <Field label="Deskripsi" multiline placeholder="Jelaskan kondisi jalan yang ditemukan" />
           <div className="character-count">0 / 250</div>
+          <div className="card"><strong>Tingkat keparahan</strong><div className="tag-row"><Tag>Ringan</Tag><Tag dark>Sedang</Tag><Tag>Berat</Tag></div><Field label="Perkiraan durasi gangguan" placeholder="Contoh: Sekitar 2 jam" /></div>
           <div className="card">
             <InfoRow icon="clock" label="Waktu laporan" value="Hari ini, 08.42 WIB" />
             <InfoRow icon="location" label="Lokasi" value="Jl. Sukajadi No. 42" />
@@ -928,6 +954,10 @@ function C3Screens() {
           <div className="description-box">
             <span>Deskripsi</span>
             <p>Air setinggi mata kaki. Sepeda motor masih dapat melintas pelan dari sisi kanan.</p>
+            <div className="divider" />
+            <p><strong>Tingkat keparahan:</strong> Sedang</p>
+            <p><strong>Perkiraan durasi:</strong> Sekitar 2 jam</p>
+            <p><strong>Waktu laporan:</strong> Hari ini, 08.42 WIB</p>
           </div>
           <div className="note small">
             <Icon name="user" />
@@ -1227,6 +1257,7 @@ function C6Screens() {
             <Metric value="09.25" label="Estimasi tiba" />
             <Metric value="4,2 km" label="Jarak tersisa" />
           </div>
+          <InfoRow icon="clock" label="Pembaruan estimasi" value="Diperbarui mengikuti kondisi perjalanan" />
           <div className="current-status">
             <span>Status pengantaran</span>
             <div>
@@ -1264,13 +1295,13 @@ function C6Screens() {
             <Icon name="clock" />
             <p>
               <strong>Kurir diperkirakan tiba dalam 15 menit</strong>
-              <span>Siapkan diri untuk menerima paket.</span>
+              <span>Estimasi dapat diperbarui mengikuti kondisi perjalanan.</span>
             </p>
           </div>
           <div className="card">
-            <span>Tujuan pengantaran</span>
-            <h4>Jl. Melati No. 18</h4>
-            <p>Sukajadi, Bandung 40162</p>
+            <span>Detail paket #PKT-72841</span>
+            <h4>Rina Pratama</h4>
+            <p>Jl. Melati No. 18, Sukajadi, Bandung 40162</p>
           </div>
           <div className="spacer" />
           <Button>Konfirmasi Kesiapan</Button>
@@ -1283,8 +1314,9 @@ function C6Screens() {
             <strong>Estimasi tiba 09.25</strong>
           </div>
           <div className="mini-location larger">
-            <MapPlaceholder variant="route" />
+            <MapPlaceholder variant="route" label="Posisi kurir menuju tujuan" />
           </div>
+          <InfoRow icon="location" label="Posisi kurir" value="Jl. Sukajadi · 1,2 km dari tujuan" />
           <DeliveryProgress active={1} />
           <div className="note small">
             <Icon name="clock" />
@@ -1342,6 +1374,7 @@ function C6Screens() {
               <i />
             </button>
           </div>
+          <div className="card"><strong>Waktu tambahan jika belum siap</strong><div className="tag-row"><Tag>5 menit</Tag><Tag>10 menit</Tag></div></div>
           <div className="spacer" />
           <Button>Kirim Jawaban</Button>
         </Phone>
@@ -1598,6 +1631,7 @@ function C6Screens() {
             </div>
           </div>
           <Field label="Nama penerima paket" value="Rina Pratama" />
+          <div className="card"><strong>Alternatif serah terima</strong><div className="tag-row"><Tag>Diterima langsung</Tag><Tag>Satpam</Tag><Tag>Orang tepercaya</Tag></div><small>Alternatif dilakukan setelah persetujuan penerima.</small></div>
           <div className="proof-box">
             <Icon name="plus" />
             <div>
@@ -1709,6 +1743,10 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
   const [vehicle, setVehicle] = useState<"motor" | "mobil">("motor");
   const [destination, setDestination] = useState("Jl. Melati No. 18, Bandung");
   const [route, setRoute] = useState<"A" | "B">("A");
+  const [severity, setSeverity] = useState("Sedang");
+  const [duration, setDuration] = useState("Sekitar 2 jam");
+  const [extraTime, setExtraTime] = useState<"5" | "10" | "none">("none");
+  const [handoffOption, setHandoffOption] = useState("Diterima langsung oleh penerima");
   const [category, setCategory] = useState("Banjir");
   const [photoAdded, setPhotoAdded] = useState(false);
   const [description, setDescription] = useState("");
@@ -1745,7 +1783,7 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
           <div className="vehicle-grid">
             <button
               className={`vehicle-option ${vehicle === "motor" ? "selected" : ""}`}
-              onClick={() => setVehicle("motor")}
+              onClick={() => { setVehicle("motor"); setRoute("A"); }}
             >
               <Icon name="bike" size={42} />
               <strong>Sepeda Motor</strong>
@@ -1758,7 +1796,7 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
             </button>
             <button
               className={`vehicle-option ${vehicle === "mobil" ? "selected" : ""}`}
-              onClick={() => setVehicle("mobil")}
+              onClick={() => { setVehicle("mobil"); setRoute("B"); }}
             >
               <Icon name="car" size={42} />
               <strong>Mobil/Van</strong>
@@ -1817,8 +1855,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
           <MapPlaceholder variant="alternatives" />
           <div className="content-title">
             <div>
-              <h4>2 rute ditemukan</h4>
-              <p>Pilih rute untuk melihat ringkasan.</p>
+              <h4>Rute untuk {vehicle === "motor" ? "sepeda motor" : "mobil/van"}</h4>
+              <p>{vehicle === "motor" ? "Rute A direkomendasikan karena lebih cepat dan dapat dilalui motor." : "Rute B direkomendasikan karena memiliki akses jalan lebih lebar untuk mobil/van."}</p>
             </div>
           </div>
           <button
@@ -1829,8 +1867,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
               name="Rute A · Jl. Anggrek"
               time="18 mnt"
               distance="4,2 km"
-              condition="200 m jalan sempit"
-              recommended
+              condition="Lebar jalan 2 m di 200 m terakhir · lalu lintas lancar"
+              recommended={vehicle === "motor"}
             />
           </button>
           <button
@@ -1841,7 +1879,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
               name="Rute B · Jl. Mawar"
               time="23 mnt"
               distance="5,1 km"
-              condition="Jalan lebar, lebih padat"
+              condition="Jalan lebar · lalu lintas ramai · tersedia ruang manuver"
+              recommended={vehicle === "mobil"}
             />
           </button>
           <div className="spacer" />
@@ -1867,8 +1906,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
               name="Rute A · Jl. Anggrek"
               time="18 mnt"
               distance="4,2 km"
-              condition="Lebar, lalu 200 m sempit"
-              recommended
+              condition="Lebar, lalu 200 m sempit · lancar"
+              recommended={vehicle === "motor"}
             />
           </button>
           <button
@@ -1879,7 +1918,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
               name="Rute B · Jl. Mawar"
               time="23 mnt"
               distance="5,1 km"
-              condition="Lebar, lalu lintas padat"
+              condition="Jalan lebar · lalu lintas ramai"
+              recommended={vehicle === "mobil"}
             />
           </button>
           <div className="comparison-head">
@@ -1889,13 +1929,13 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
           </div>
           <div className="compare-row">
             <span>Akses kendaraan</span>
-            <b>{vehicle === "mobil" ? "Risiko" : "Baik"}</b>
-            <b>Baik</b>
+            <b>{vehicle === "mobil" ? "Tidak disarankan" : "Sesuai"}</b>
+            <b>Sesuai</b>
           </div>
           <div className="compare-row">
-            <span>Data terbaru</span>
-            <b>5 mnt</b>
-            <b>18 mnt</b>
+            <span>Lalu lintas</span>
+            <b>Lancar</b>
+            <b>Ramai</b>
           </div>
           <div className="spacer" />
           <Button onClick={() => next(4)}>Pilih Rute {route}</Button>
@@ -1947,6 +1987,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
             </div>
           )}
           <InfoRow icon="message" label="Instruksi akses" value="Masuk melalui gerbang samping" />
+          <InfoRow icon="map" label="Kondisi lalu lintas" value={route === "A" ? "Lancar" : "Ramai"} />
+          <InfoRow icon="location" label="Titik berhenti" value={route === "B" ? "Area parkir dekat gerbang utama" : "Ruang putar terbatas di gang"} />
           <div className="spacer" />
           <Button onClick={() => (vehicle === "mobil" && route === "A" ? next(5) : next(7))}>
             Gunakan Rute Ini
@@ -2082,7 +2124,7 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
         <Phone title="Kondisi Jalan" eyebrow="UJI PROTOTIPE · C3" back onBack={back}>
           <TestHint>Buat laporan baru, kemudian periksa hasilnya pada peta.</TestHint>
           <div className="large-map test-map">
-            <MapPlaceholder variant="reports" />
+            <MapPlaceholder variant="reports" onReportPinClick={(item) => { setCategory(item); finish(`Laporan ${item}`, `Detail laporan ${item} di sekitar Jl. Sukajadi.`, 7); }} />
           </div>
           <button className="card interactive-card report-map-card" onClick={() => next(7)}>
             <Tag dark>Banjir</Tag>
@@ -2114,8 +2156,8 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
                   onClick={() => setCategory(item)}
                   key={item}
                 >
-                  <span className="category-symbol">!</span>
-                  <strong>{item}</strong>
+                  <span className="category-symbol">{item === "Jalan Ditutup" ? "🚧" : item === "Banjir" ? "🌊" : item === "Jalan Rusak" ? "⚠" : item === "Jalan Sempit" ? "↔" : item === "Akses Terhalang" ? "⛔" : "!"}</span>
+                  <span className="category-copy"><strong>{item}</strong><small>{item === "Jalan Sempit" ? "Masih dapat dilewati, tetapi ruang terbatas" : item === "Akses Terhalang" || item === "Jalan Ditutup" ? "Jalan tertutup atau tidak dapat dilalui" : item === "Banjir" ? "Jalan tergenang air" : "Permukaan jalan berlubang atau rusak"}</small></span>
                   {category === item && <Icon name="check" />}
                 </button>
               ),
@@ -2202,6 +2244,12 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
             multiline
           />
           <div className="character-count">{description.length} / 250</div>
+          <div className="card report-extra-fields">
+            <strong>Tingkat keparahan</strong>
+            <div className="choice-stack compact-choice">{["Ringan", "Sedang", "Berat"].map((item) => <button type="button" key={item} className={severity === item ? "selected" : ""} onClick={() => setSeverity(item)}><div><span><strong>{item}</strong><small>{item === "Ringan" ? "Masih dapat dilalui" : item === "Sedang" ? "Perjalanan mulai terganggu" : "Akses sangat terganggu"}</small></span></div><i /></button>)}</div>
+            <TestInput label="Perkiraan durasi gangguan" value={duration} onChange={setDuration} placeholder="Contoh: Sekitar 2 jam" />
+            <small className="field-help">Isi jika durasi gangguan diketahui. Jika belum diketahui, tulis "Belum diketahui".</small>
+          </div>
           <div className="suggestions">
             <span>Saran cepat</span>
             <button
@@ -2235,7 +2283,7 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
             <div>
               <Tag dark>{category}</Tag>
               <h4>Jl. Sukajadi No. 42</h4>
-              <p>Hari ini, 08.42 WIB</p>
+              <p>Hari ini, 08.42 WIB</p><small>Keparahan: {severity} · Durasi: {duration || "Belum diketahui"}</small>
             </div>
             <button className="icon-button" onClick={() => next(4)}>
               <Icon name="edit" />
@@ -2316,6 +2364,10 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
           <div className="description-box">
             <span>Keterangan</span>
             <p>{description || "Air setinggi mata kaki. Motor masih dapat melintas perlahan."}</p>
+            <div className="divider" />
+            <p><strong>Tingkat keparahan:</strong> {severity}</p>
+            <p><strong>Perkiraan durasi:</strong> {duration || "Belum diketahui"}</p>
+            <p><strong>Waktu laporan:</strong> Hari ini, 08.42 WIB</p>
           </div>
           <div className="spacer" />
           <Button onClick={() => next(8)}>Konfirmasi Kondisi</Button>
@@ -2497,51 +2549,25 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
       else setC6Role(null);
     };
     const callPerson = (person: string) =>
-      finish(
-        `Menghubungi ${person}`,
-        `Simulasi panggilan kepada ${person}. Tidak ada panggilan telepon sungguhan yang dilakukan.`,
-      );
+      finish(`Menghubungi ${person}`, `Simulasi panggilan kepada ${person}. Tidak ada panggilan telepon sungguhan yang dilakukan.`);
 
     if (!c6Role)
       return (
         <Phone title="Pilih Peran C6" eyebrow="NOTIFIKASI KEDATANGAN" back onBack={back}>
-          <TestHint>
-            Pilih peran yang ingin diuji. Seluruh fitur dan alur C6 lama tetap dipertahankan, hanya
-            dipisahkan berdasarkan peran.
-          </TestHint>
+          <TestHint>Pilih peran yang ingin diuji. Seluruh fitur dan alur C6 lama tetap dipertahankan, hanya dipisahkan berdasarkan peran.</TestHint>
           <div className="intro-copy">
             <h4>Anda menggunakan aplikasi sebagai siapa?</h4>
             <p>Pilih tampilan Kurir atau Penerima untuk memulai skenario.</p>
           </div>
           <div className="scenario-list">
-            <button
-              onClick={() => {
-                setC6Role("kurir");
-                setStep(0);
-              }}
-            >
-              <b>
-                <Icon name="bike" />
-              </b>
-              <div>
-                <strong>C6 Kurir</strong>
-                <span>Pengantaran aktif, koordinasi dengan penerima, dan serah terima paket.</span>
-              </div>
+            <button onClick={() => { setC6Role("kurir"); setStep(0); }}>
+              <b><Icon name="bike" /></b>
+              <div><strong>C6 Kurir</strong><span>Pengantaran aktif, koordinasi dengan penerima, dan serah terima paket.</span></div>
               <Icon name="arrow" />
             </button>
-            <button
-              onClick={() => {
-                setC6Role("penerima");
-                setStep(0);
-              }}
-            >
-              <b>
-                <Icon name="user" />
-              </b>
-              <div>
-                <strong>C6 Penerima</strong>
-                <span>Notifikasi, pelacakan, kesiapan, lokasi, pesan, dan kendala penerimaan.</span>
-              </div>
+            <button onClick={() => { setC6Role("penerima"); setStep(0); }}>
+              <b><Icon name="user" /></b>
+              <div><strong>C6 Penerima</strong><span>Notifikasi, pelacakan, kesiapan, lokasi, pesan, dan kendala penerimaan.</span></div>
               <Icon name="arrow" />
             </button>
           </div>
@@ -2552,196 +2578,48 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
       if (step === 0)
         return (
           <Phone title="Pengantaran Aktif" eyebrow="C6 · TAMPILAN KURIR" back onBack={c6Back}>
-            <TestHint>
-              Periksa rute dan estimasi tiba, hubungi penerima bila diperlukan, lalu kirim
-              notifikasi kedatangan.
-            </TestHint>
+            <TestHint>Periksa rute dan estimasi tiba, hubungi penerima bila diperlukan, lalu kirim notifikasi kedatangan.</TestHint>
             <div className="delivery-map">
               <MapPlaceholder variant="route" />
-              <div className="eta-float">
-                <span>Tiba dalam</span>
-                <strong>20 menit</strong>
-              </div>
+              <div className="eta-float"><span>Tiba dalam</span><strong>20 menit</strong></div>
             </div>
             <div className="package-head">
-              <div>
-                <span>PAKET #PKT-72841</span>
-                <h4>Rina Pratama</h4>
-                <p>Jl. Melati No. 18, Sukajadi</p>
-              </div>
-              <button
-                className="round-button"
-                onClick={() => callPerson("Rina Pratama · Penerima")}
-              >
-                <Icon name="phone" />
-              </button>
+              <div><span>PAKET #PKT-72841</span><h4>Rina Pratama</h4><p>Jl. Melati No. 18, Sukajadi</p></div>
+              <button className="round-button" onClick={() => callPerson("Rina Pratama · Penerima")}><Icon name="phone" /></button>
             </div>
-            <div className="summary-band boxed">
-              <Metric value="09.25" label="Estimasi tiba" />
-              <Metric value="4,2 km" label="Jarak tersisa" />
-            </div>
-            <div className="current-status">
-              <span>Status pengantaran</span>
-              <div>
-                <i />
-                <strong>Dalam Perjalanan</strong>
-              </div>
-            </div>
-            <InfoRow
-              icon="message"
-              label="Catatan penerima"
-              value={message || "Hubungi ketika sudah sampai"}
-            />
+            <div className="summary-band boxed"><Metric value="09.25" label="Estimasi tiba" /><Metric value="4,2 km" label="Jarak tersisa" /></div>
+            <div className="current-status"><span>Status pengantaran</span><div><i /><strong>Dalam Perjalanan</strong></div></div>
+            <InfoRow icon="message" label="Catatan penerima" value={message || "Hubungi ketika sudah sampai"} />
             <div className="spacer" />
-            <Button
-              onClick={() =>
-                finish(
-                  "Notifikasi terkirim",
-                  "Penerima menerima notifikasi perkiraan kedatangan kurir.",
-                  1,
-                )
-              }
-            >
-              Kirim Notifikasi Kedatangan
-            </Button>
+            <Button onClick={() => finish("Notifikasi terkirim", "Penerima menerima notifikasi perkiraan kedatangan kurir.", 1)}>Kirim Notifikasi Kedatangan</Button>
           </Phone>
         );
       if (step === 1)
         return (
           <Phone title="Respons Penerima" eyebrow="C6 · TAMPILAN KURIR" back onBack={c6Back}>
             <TestHint>Periksa respons kesiapan penerima dan instruksi yang dikirimkan.</TestHint>
-            <div className="response-banner">
-              <Icon name={ready === "Siap" ? "check" : "clock"} size={32} />
-              <div>
-                <span>PENERIMA MERESPONS</span>
-                <strong>
-                  {ready === "Siap" ? "Siap menerima paket" : "Belum siap menerima paket"}
-                </strong>
-                <p>Respons diterima</p>
-              </div>
-            </div>
-            <div className="card recipient-card">
-              <div>
-                <span>Penerima</span>
-                <strong>Rina Pratama</strong>
-                <p>Jl. Melati No. 18, Sukajadi</p>
-              </div>
-              <button
-                className="round-button"
-                onClick={() => callPerson("Rina Pratama · Penerima")}
-              >
-                <Icon name="phone" />
-              </button>
-            </div>
+            <div className="response-banner"><Icon name={ready === "Siap" ? "check" : "clock"} size={32} /><div><span>PENERIMA MERESPONS</span><strong>{ready === "Siap" ? "Siap menerima paket" : "Belum siap menerima paket"}</strong><p>Respons diterima</p></div></div>
+            <div className="card recipient-card"><div><span>Penerima</span><strong>Rina Pratama</strong><p>Jl. Melati No. 18, Sukajadi</p></div><button className="round-button" onClick={() => callPerson("Rina Pratama · Penerima")}><Icon name="phone" /></button></div>
             <div className="coordination-status">
               <span>Status koordinasi</span>
-              <div>
-                <i>
-                  <Icon name="check" size={13} />
-                </i>
-                <p>
-                  <strong>Notifikasi kedatangan terkirim</strong>
-                  <span>09.10 WIB</span>
-                </p>
-              </div>
-              <div>
-                <i>
-                  <Icon name="check" size={13} />
-                </i>
-                <p>
-                  <strong>
-                    {ready === "Siap" ? "Penerima menyatakan siap" : "Penerima belum siap"}
-                  </strong>
-                  <span>09.13 WIB</span>
-                </p>
-              </div>
-              <div>
-                <i>3</i>
-                <p>
-                  <strong>Serah terima paket</strong>
-                  <span>Menunggu kedatangan</span>
-                </p>
-              </div>
+              <div><i><Icon name="check" size={13} /></i><p><strong>Notifikasi kedatangan terkirim</strong><span>09.10 WIB</span></p></div>
+              <div><i><Icon name="check" size={13} /></i><p><strong>{ready === "Siap" ? "Penerima menyatakan siap" : "Penerima belum siap"}</strong><span>09.13 WIB</span></p></div>
+              <div><i>3</i><p><strong>Serah terima paket</strong><span>Menunggu kedatangan</span></p></div>
             </div>
-            <div className="note small">
-              <Icon name="message" />
-              <p>
-                <strong>Pesan penerima</strong>
-                <span>“{message || "Tidak ada pesan tambahan"}”</span>
-              </p>
-            </div>
+            <div className="note small"><Icon name="message" /><p><strong>Pesan penerima</strong><span>“{message || "Tidak ada pesan tambahan"}”</span></p></div>
             <div className="spacer" />
             <Button onClick={() => next(2)}>Lanjutkan Navigasi</Button>
           </Phone>
         );
       return (
         <Phone title="Serah Terima Paket" eyebrow="C6 · TAMPILAN KURIR" back onBack={c6Back}>
-          <div className="handoff-hero">
-            <div>
-              <Icon name="home" size={37} />
-            </div>
-            <span>KURIR TIBA DI TUJUAN</span>
-            <h4>Konfirmasi serah terima</h4>
-            <p>Pastikan paket telah diterima oleh penerima yang benar.</p>
-          </div>
-          <div className="card handoff-card">
-            <span>PAKET #PKT-72841</span>
-            <h4>Rina Pratama</h4>
-            <p>Jl. Melati No. 18, Sukajadi</p>
-            <div className="divider" />
-            <div className="row-between">
-              <span>Waktu tiba</span>
-              <strong>09.34 WIB</strong>
-            </div>
-          </div>
+          <div className="handoff-hero"><div><Icon name="home" size={37} /></div><span>KURIR TIBA DI TUJUAN</span><h4>Konfirmasi serah terima</h4><p>Pastikan paket telah diterima oleh penerima yang benar.</p></div>
+          <div className="card handoff-card"><span>PAKET #PKT-72841</span><h4>Rina Pratama</h4><p>Jl. Melati No. 18, Sukajadi</p><div className="divider" /><div className="row-between"><span>Waktu tiba</span><strong>09.34 WIB</strong></div></div>
           <Field label="Nama penerima paket" value="Rina Pratama" />
-          <div
-            className="proof-box"
-            role="button"
-            tabIndex={0}
-            onClick={() =>
-              setOverlay({
-                title: "Bukti ditambahkan",
-                text: "Foto serah terima berhasil disimulasikan.",
-                icon: "check",
-              })
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                setOverlay({
-                  title: "Bukti ditambahkan",
-                  text: "Foto serah terima berhasil disimulasikan.",
-                  icon: "check",
-                });
-              }
-            }}
-          >
-            <Icon name="plus" />
-            <div>
-              <strong>Tambah bukti serah terima</strong>
-              <span>Foto atau tanda tangan penerima</span>
-            </div>
-          </div>
-          <div className="check-confirm">
-            <span>
-              <Icon name="check" />
-            </span>
-            <p>Saya memastikan paket telah diserahkan kepada penerima.</p>
-          </div>
+          <button type="button" className="proof-box" style={{ width: "100%", textAlign: "left", border: "1px dashed #777", background: "#f8f8f8", color: "inherit", cursor: "pointer", padding: 14, display: "flex", alignItems: "center", gap: 12 }} onClick={() => finish("Bukti ditambahkan", "Foto serah terima berhasil disimulasikan.")}><Icon name="plus" /><div><strong>Tambah bukti serah terima</strong><span>Foto atau tanda tangan penerima</span></div></button>
+          <div className="check-confirm"><span><Icon name="check" /></span><p>Saya memastikan paket telah diserahkan kepada penerima.</p></div>
           <div className="spacer" />
-          <Button
-            icon="send"
-            onClick={() =>
-              finish(
-                "Bukti serah terima berhasil dikirim",
-                "Bukti serah terima paket telah dikirim. Penerima mendapatkan notifikasi bahwa paket telah diserahkan oleh kurir.",
-                0,
-              )
-            }
-          >
-            Kirim Bukti Serah Terima
-          </Button>
+          <Button icon="check" onClick={() => finish("Skenario C6 Kurir selesai", "Alur pengantaran, koordinasi, dan konfirmasi serah terima telah disimulasikan.", 0)}>Paket Telah Diserahkan</Button>
         </Phone>
       );
     }
@@ -2751,331 +2629,85 @@ function PrototypeTester({ onClose }: { onClose: () => void }) {
       return (
         <Phone title="Kiriman Anda" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
           <TestHint>Periksa notifikasi perkiraan kedatangan dan informasi kurir.</TestHint>
-          <div className="arrival-hero">
-            <span>PERKIRAAN KEDATANGAN</span>
-            <strong>15</strong>
-            <p>menit lagi</p>
-            <small>Kurir diperkirakan tiba pukul 09.25</small>
-          </div>
-          <div className="courier-card">
-            <div className="avatar">
-              <Icon name="user" size={26} />
-            </div>
-            <div>
-              <span>Kurir Anda</span>
-              <strong>Adi Saputra</strong>
-              <p>ID Kurir K-1842 · Sepeda Motor</p>
-            </div>
-            <button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}>
-              <Icon name="phone" />
-            </button>
-          </div>
-          <div className="notification-box">
-            <Icon name="clock" />
-            <p>
-              <strong>Kurir diperkirakan tiba dalam 15 menit</strong>
-              <span>Siapkan diri untuk menerima paket.</span>
-            </p>
-          </div>
-          <div className="card">
-            <span>Tujuan pengantaran</span>
-            <h4>Jl. Melati No. 18</h4>
-            <p>Sukajadi, Bandung 40162</p>
-          </div>
-          <div className="spacer" />
-          <Button onClick={() => next(1)}>Lihat Status Pengantaran</Button>
+          <div className="arrival-hero"><span>PERKIRAAN KEDATANGAN</span><strong>15</strong><p>menit lagi</p><small>Kurir diperkirakan tiba pukul 09.25</small></div>
+          <div className="courier-card"><div className="avatar"><Icon name="user" size={26} /></div><div><span>Kurir Anda</span><strong>Adi Saputra</strong><p>ID Kurir K-1842 · Sepeda Motor</p></div><button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}><Icon name="phone" /></button></div>
+          <div className="notification-box"><Icon name="clock" /><p><strong>Kurir diperkirakan tiba dalam 15 menit</strong><span>Siapkan diri untuk menerima paket.</span></p></div>
+          <div className="card"><span>Detail paket #PKT-72841</span><h4>Rina Pratama</h4><p>Jl. Melati No. 18, Sukajadi, Bandung 40162</p><div className="divider" /><div className="row-between"><span>Status</span><strong>Dalam perjalanan</strong></div></div>
+          <div className="spacer" /><Button onClick={() => next(1)}>Lihat Status Pengantaran</Button>
         </Phone>
       );
     if (step === 1)
       return (
         <Phone title="Status Pengantaran" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="package-code">
-            <span>PAKET #PKT-72841</span>
-            <strong>Estimasi tiba 09.25</strong>
-          </div>
-          <div className="mini-location larger">
-            <MapPlaceholder variant="route" />
-          </div>
+          <div className="package-code"><span>PAKET #PKT-72841</span><strong>Estimasi tiba 09.25</strong></div>
+          <div className="mini-location larger"><MapPlaceholder variant="route" label="Posisi kurir menuju lokasi Anda" /></div>
+          <div className="card"><InfoRow icon="location" label="Posisi kurir" value="Jl. Sukajadi · 1,2 km dari tujuan" /><InfoRow icon="clock" label="Estimasi terbaru" value="09.25 WIB" /></div>
           <DeliveryProgress active={1} />
-          <div className="note small">
-            <Icon name="clock" />
-            <p>
-              <strong>Kurir mendekati lokasi</strong>
-              <span>Jarak tersisa sekitar 1,2 km.</span>
-            </p>
-          </div>
-          <div className="card recipient-card">
-            <div>
-              <span>Kurir</span>
-              <strong>Adi Saputra</strong>
-              <p>Sepeda Motor · K-1842</p>
-            </div>
-            <button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}>
-              <Icon name="phone" />
-            </button>
-          </div>
-          <div className="spacer" />
-          <Button secondary onClick={() => next(2)}>
-            Konfirmasi Kesiapan
-          </Button>
+          <div className="note small"><Icon name="clock" /><p><strong>Kurir mendekati lokasi</strong><span>Jarak tersisa sekitar 1,2 km.</span></p></div>
+          <div className="card recipient-card"><div><span>Kurir</span><strong>Adi Saputra</strong><p>Sepeda Motor · K-1842</p></div><button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}><Icon name="phone" /></button></div>
+          <div className="spacer" /><Button secondary onClick={() => next(2)}>Konfirmasi Kesiapan</Button>
         </Phone>
       );
     if (step === 2)
       return (
         <Phone title="Konfirmasi Kesiapan" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="readiness-hero">
-            <div>
-              <Icon name="home" size={40} />
-            </div>
-            <h4>Apakah Anda siap menerima paket?</h4>
-            <p>Kurir diperkirakan tiba dalam 12 menit.</p>
-          </div>
-          <div className="card">
-            <InfoRow icon="clock" label="Perkiraan tiba" value="09.25 WIB" />
-            <InfoRow icon="location" label="Alamat" value="Jl. Melati No. 18" />
-          </div>
-          <div className="choice-stack">
-            {(["Siap", "Belum Siap"] as const).map((item) => (
-              <button
-                key={item}
-                className={ready === item ? "selected" : ""}
-                onClick={() => setReady(item)}
-              >
-                <div>
-                  <Icon name={item === "Siap" ? "check" : "clock"} />
-                  <span>
-                    <strong>{item}</strong>
-                    <small>
-                      {item === "Siap"
-                        ? "Saya dapat menerima paket"
-                        : "Saya perlu waktu atau tidak tersedia"}
-                    </small>
-                  </span>
-                </div>
-                <i />
-              </button>
-            ))}
-          </div>
-          <div className="spacer" />
-          <Button onClick={() => next(3)}>Kirim Jawaban</Button>
+          <div className="readiness-hero"><div><Icon name="home" size={40} /></div><h4>Apakah Anda siap menerima paket?</h4><p>Kurir diperkirakan tiba dalam 12 menit.</p></div>
+          <div className="card"><InfoRow icon="clock" label="Perkiraan tiba" value="09.25 WIB" /><InfoRow icon="location" label="Alamat" value="Jl. Melati No. 18" /></div>
+          <div className="choice-stack">{(["Siap", "Belum Siap"] as const).map((item) => <button key={item} className={ready === item ? "selected" : ""} onClick={() => setReady(item)}><div><Icon name={item === "Siap" ? "check" : "clock"} /><span><strong>{item}</strong><small>{item === "Siap" ? "Saya dapat menerima paket" : "Saya perlu waktu tambahan"}</small></span></div><i /></button>)}</div>
+          {ready === "Belum Siap" && <div className="card"><strong>Berapa waktu tambahan yang dibutuhkan?</strong><div className="button-row"><Button secondary onClick={() => setExtraTime("5")}>5 menit</Button><Button secondary onClick={() => setExtraTime("10")}>10 menit</Button></div><small>{extraTime === "none" ? "Pilih waktu tambahan atau lanjutkan ke koordinasi." : `Permintaan tambahan ${extraTime} menit dipilih.`}</small></div>}
+          <div className="spacer" /><Button onClick={() => next(3)}>Kirim Jawaban</Button>
         </Phone>
       );
     if (step === 3)
       return (
         <Phone title="Pembaruan Kedatangan" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="delay-hero">
-            <Icon name="clock" size={35} />
-            <span>ESTIMASI DIPERBARUI</span>
-            <h4>Kurir mengalami keterlambatan</h4>
-            <p>Kondisi lalu lintas memperlambat perjalanan.</p>
-          </div>
-          <div className="eta-change">
-            <div>
-              <span>Estimasi sebelumnya</span>
-              <strong className="struck">09.25</strong>
-            </div>
-            <Icon name="arrow" />
-            <div>
-              <span>Estimasi terbaru</span>
-              <strong>09.35</strong>
-            </div>
-          </div>
-          <div className="card">
-            <div className="row-between">
-              <span>Tambahan waktu</span>
-              <strong>+10 menit</strong>
-            </div>
-            <div className="divider" />
-            <div className="row-between">
-              <span>Jarak tersisa</span>
-              <strong>2,1 km</strong>
-            </div>
-          </div>
-          <div className="notification-box">
-            <Icon name="warning" />
-            <p>
-              <strong>Mohon maaf atas keterlambatan</strong>
-              <span>Anda akan menerima pengingat saat kurir mendekat.</span>
-            </p>
-          </div>
-          <div className="spacer" />
-          <Button secondary onClick={() => callPerson("Adi Saputra · Kurir")}>
-            Hubungi Kurir
-          </Button>
-          <Button onClick={() => next(4)}>Lanjutkan</Button>
+          <div className="delay-hero"><Icon name="clock" size={35} /><span>ESTIMASI DIPERBARUI</span><h4>Kurir mengalami keterlambatan</h4><p>Kondisi lalu lintas memperlambat perjalanan.</p></div>
+          <div className="eta-change"><div><span>Estimasi sebelumnya</span><strong className="struck">09.25</strong></div><Icon name="arrow" /><div><span>Estimasi terbaru</span><strong>{extraTime === "5" ? "09.30" : "09.35"}</strong></div></div>
+          <div className="card"><div className="row-between"><span>Tambahan waktu</span><strong>+{extraTime === "none" ? "10" : extraTime} menit</strong></div><div className="divider" /><div className="row-between"><span>Jarak tersisa</span><strong>2,1 km</strong></div></div>
+          <div className="notification-box"><Icon name="warning" /><p><strong>Mohon maaf atas keterlambatan</strong><span>Anda akan menerima pengingat saat kurir mendekat.</span></p></div>
+          <div className="spacer" /><Button secondary onClick={() => callPerson("Adi Saputra · Kurir")}>Hubungi Kurir</Button><Button onClick={() => next(4)}>Lanjutkan</Button>
         </Phone>
       );
     if (step === 4)
       return (
         <Phone title="Kurir Hampir Tiba" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="reminder-hero">
-            <div className="radar">
-              <Icon name="bike" size={42} />
-            </div>
-            <span>PENGINGAT KEDATANGAN</span>
-            <h4>Kurir sudah dekat</h4>
-            <p>Kurir berjarak sekitar 300 meter dari lokasi Anda.</p>
-          </div>
-          <div className="arrival-count">
-            <span>Diperkirakan tiba dalam</span>
-            <strong>3 menit</strong>
-          </div>
-          <div className="card recipient-card">
-            <div>
-              <span>Kurir</span>
-              <strong>Adi Saputra</strong>
-              <p>Sepeda Motor · K-1842</p>
-            </div>
-            <button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}>
-              <Icon name="phone" />
-            </button>
-          </div>
-          <div className="checklist">
-            <strong>Persiapkan serah terima</strong>
-            <p>
-              <Icon name="check" size={16} />
-              Pastikan Anda berada di lokasi
-            </p>
-            <p>
-              <Icon name="check" size={16} />
-              Siapkan kode penerimaan 4821
-            </p>
-          </div>
-          <div className="spacer" />
-          <Button onClick={() => next(5)}>Saya Siap</Button>
+          <div className="reminder-hero"><div className="radar"><Icon name="bike" size={42} /></div><span>PENGINGAT KEDATANGAN</span><h4>Kurir sudah dekat</h4><p>Kurir berjarak sekitar 300 meter dari lokasi Anda.</p></div>
+          <div className="arrival-count"><span>Diperkirakan tiba dalam</span><strong>3 menit</strong></div>
+          <div className="card recipient-card"><div><span>Kurir</span><strong>Adi Saputra</strong><p>Sepeda Motor · K-1842</p></div><button className="round-button" onClick={() => callPerson("Adi Saputra · Kurir")}><Icon name="phone" /></button></div>
+          <div className="checklist"><strong>Persiapkan serah terima</strong><p><Icon name="check" size={16} />Pastikan Anda berada di lokasi</p><p><Icon name="check" size={16} />Siapkan kode penerimaan 4821</p></div>
+          <div className="spacer" /><Button onClick={() => next(5)}>Saya Siap</Button>
         </Phone>
       );
     if (step === 5)
       return (
         <Phone title="Konfirmasi Lokasi" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="location-map">
-            <MapPlaceholder variant="location" label="Titik pengantaran" />
-          </div>
-          <div className="location-pin-caption">
-            <span>ALAMAT PENGANTARAN</span>
-            <strong>Jl. Melati No. 18</strong>
-            <p>Sukajadi, Bandung 40162</p>
-          </div>
-          <div className="accuracy">
-            <Icon name="location" />
-            <div>
-              <strong>Apakah titik ini sudah tepat?</strong>
-              <span>Kurir akan menuju titik yang ditandai.</span>
-            </div>
-          </div>
+          <div className="location-map"><MapPlaceholder variant="location" label="Titik pengantaran" /></div>
+          <div className="location-pin-caption"><span>ALAMAT PENGANTARAN</span><strong>Jl. Melati No. 18</strong><p>Sukajadi, Bandung 40162</p></div>
+          <div className="accuracy"><Icon name="location" /><div><strong>Apakah titik ini sudah tepat?</strong><span>Kurir akan menuju titik yang ditandai.</span></div></div>
           <Field label="Patokan lokasi" value="Gerbang hijau, samping Apotek Sehat" />
-          <div className="button-row">
-            <Button
-              secondary
-              onClick={() =>
-                finish("Ubah titik lokasi", "Simulasi pengubahan titik lokasi pengantaran.")
-              }
-            >
-              Ubah Titik
-            </Button>
-            <Button onClick={() => next(6)}>Lokasi Tepat</Button>
-          </div>
+          <div className="button-row"><Button secondary onClick={() => finish("Ubah titik lokasi", "Simulasi pengubahan titik lokasi pengantaran.")}>Ubah Titik</Button><Button onClick={() => next(6)}>Lokasi Tepat</Button></div>
         </Phone>
       );
     if (step === 6)
       return (
         <Phone title="Pesan untuk Kurir" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-          <div className="intro-copy compact-top">
-            <h4>Tambahkan instruksi</h4>
-            <p>Pesan akan langsung terlihat oleh kurir.</p>
-          </div>
-          <TestInput
-            label="Pesan tambahan"
-            value={message}
-            onChange={setMessage}
-            placeholder="Silakan hubungi saya ketika sudah sampai"
-            multiline
-          />
-          <div className="suggestions wide">
-            <span>Pesan cepat</span>
-            <button onClick={() => setMessage("Titipkan ke satpam")}>“Titipkan ke satpam”</button>
-            <button onClick={() => setMessage("Tunggu di gerbang utama")}>
-              “Tunggu di gerbang utama”
-            </button>
-            <button onClick={() => setMessage("Jangan tekan bel")}>“Jangan tekan bel”</button>
-          </div>
-          <div className="card">
-            <InfoRow icon="user" label="Dikirim kepada" value="Adi Saputra · Kurir K-1842" />
-          </div>
-          <div className="note small">
-            <Icon name="message" />
-            <p>
-              <strong>Pesan terkait pengantaran saja</strong>
-              <span>Jangan bagikan informasi sensitif.</span>
-            </p>
-          </div>
-          <div className="spacer" />
-          <Button icon="send" onClick={() => next(7)}>
-            Kirim Pesan
-          </Button>
+          <div className="intro-copy compact-top"><h4>Tambahkan instruksi</h4><p>Pesan akan langsung terlihat oleh kurir.</p></div>
+          <TestInput label="Pesan tambahan" value={message} onChange={setMessage} placeholder="Silakan hubungi saya ketika sudah sampai" multiline />
+          <div className="suggestions wide"><span>Pesan cepat</span><button onClick={() => setMessage("Titipkan ke satpam")}>“Titipkan ke satpam”</button><button onClick={() => setMessage("Tunggu di gerbang utama")}>“Tunggu di gerbang utama”</button><button onClick={() => setMessage("Jangan tekan bel")}>“Jangan tekan bel”</button></div>
+          <div className="card"><InfoRow icon="user" label="Dikirim kepada" value="Adi Saputra · Kurir K-1842" /></div>
+          <div className="note small"><Icon name="message" /><p><strong>Pesan terkait pengantaran saja</strong><span>Jangan bagikan informasi sensitif.</span></p></div>
+          <div className="spacer" /><Button icon="send" onClick={() => next(7)}>Kirim Pesan</Button>
         </Phone>
       );
     return (
       <Phone title="Kendala Penerimaan" eyebrow="C6 · TAMPILAN PENERIMA" back onBack={c6Back}>
-        <div className="problem-hero">
-          <Icon name="warning" size={36} />
-          <h4>Tidak dapat menerima paket?</h4>
-          <p>Beri tahu kurir agar pengantaran dapat dikoordinasikan.</p>
-        </div>
+        <div className="problem-hero"><Icon name="warning" size={36} /><h4>Tidak dapat menerima paket?</h4><p>Beri tahu kurir agar pengantaran dapat dikoordinasikan.</p></div>
         <h4 className="section-label">Pilih alasan</h4>
-        <div className="radio-list compact-list">
-          {[
-            "Tidak berada di lokasi",
-            "Perlu waktu tambahan",
-            "Alamat perlu diperbaiki",
-            "Alasan lainnya",
-          ].map((item) => (
-            <button
-              key={item}
-              className={problem === item ? "selected" : ""}
-              onClick={() => setProblem(item)}
-            >
-              <i />
-              <div>
-                <strong>{item}</strong>
-              </div>
-            </button>
-          ))}
-        </div>
-        <TestInput
-          label="Penjelasan singkat"
-          value={message}
-          onChange={setMessage}
-          placeholder="Berikan informasi untuk kurir"
-          multiline
-        />
-        <div className="note small">
-          <Icon name="clock" />
-          <p>
-            <strong>Kurir tiba sekitar 8 menit lagi</strong>
-            <span>Respons Anda akan dikirim segera.</span>
-          </p>
-        </div>
-        <div className="spacer" />
-        <Button
-          onClick={() =>
-            finish("Informasi terkirim", `Kendala penerimaan dikirim kepada kurir: ${problem}.`, 0)
-          }
-        >
-          Kirim Informasi
-        </Button>
-        <Button
-          secondary
-          onClick={() =>
-            finish(
-              "Skenario C6 Penerima selesai",
-              "Alur penerima selesai tanpa mengirim kendala.",
-              0,
-            )
-          }
-        >
-          Selesai
-        </Button>
+        <div className="radio-list compact-list">{["Tidak berada di lokasi", "Perlu waktu tambahan", "Alamat perlu diperbaiki", "Alasan lainnya"].map((item) => <button key={item} className={problem === item ? "selected" : ""} onClick={() => setProblem(item)}><i /><div><strong>{item}</strong></div></button>)}</div>
+        <TestInput label="Penjelasan singkat" value={message} onChange={setMessage} placeholder="Berikan informasi untuk kurir" multiline />
+        <div className="card"><strong>Alternatif serah terima</strong><div className="radio-list compact-list">{["Diterima langsung oleh penerima", "Dititipkan kepada satpam", "Dititipkan kepada orang tepercaya", "Jadwalkan ulang kedatangan"].map((item) => <button type="button" key={item} className={handoffOption === item ? "selected" : ""} onClick={() => setHandoffOption(item)}><i /><div><strong>{item}</strong></div></button>)}</div><small>Penitipan hanya dilakukan setelah persetujuan penerima dan sesuai ketentuan pengiriman.</small></div>
+        <div className="note small"><Icon name="clock" /><p><strong>Kurir tiba sekitar 8 menit lagi</strong><span>Respons Anda akan dikirim segera.</span></p></div>
+        <div className="spacer" /><Button onClick={() => finish("Informasi terkirim", `Kendala: ${problem}. Pilihan serah terima: ${handoffOption}.`, 0)}>Kirim Informasi</Button><Button secondary onClick={() => finish("Skenario C6 Penerima selesai", "Alur penerima selesai tanpa mengirim kendala.", 0)}>Selesai</Button>
       </Phone>
     );
   };
@@ -3203,7 +2835,7 @@ export default function App() {
           <i className="key-line" />
           Konektor alur
         </span>
-        <b>31 layar mobile</b>
+        <b>32 layar mobile</b>
       </div>
       <C2Screens />
       <C3Screens />
